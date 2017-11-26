@@ -36,13 +36,24 @@ func upper() string {
 	return letters[index:index+1]
 }
 
+// random English letter generagor
 func character() string {
 	rand.Seed(time.Now().UTC().UnixNano())
-	if rand.Intn(2) {
+	if rand.Intn(2) % 2 == 1 {
 		return lower()
 	} else {
 		return upper()
 	}
+}
+
+// special characters: ~!@#$%^&*()-_=+{}[]:;/?<>,.|\
+
+func special() string {
+	characters := "~!@#$%^&*()-_=+{}[]:;/?<>,.|"
+	rand.Seed(time.Now().UTC().UnixNano())
+	index := rand.Intn(29)
+
+	return characters[index:index+1]
 }
 
 // This function generates a password with a given pattern
@@ -50,9 +61,10 @@ func character() string {
 // c := lower or upper case letter
 // l := lower case letter
 // u := upper case letter
+// s := special characters
 
 func main() {
-	MyString := "ddlulddcc"
+	MyString := "ddlulssddcc"
 	output := ""
 	for _, char := range MyString {
 		c := string(char)
@@ -65,6 +77,8 @@ func main() {
 			output += lower()
 		case "u":
 			output += upper()
+		case "s":
+			output += special()
 		}
 	}
 	fmt.Println(output)
