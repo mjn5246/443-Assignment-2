@@ -1,6 +1,8 @@
 package main
 
-// !!!Notice!!! 
+// This file tries to generate a password with a given pattern.
+// But I am still not sure how to select a random word from the given dictionary
+// !!!Notice!!!
 // I change the package "rand" to "math/rand" because my go program can not find the package "rand"
 
 import (
@@ -51,7 +53,7 @@ func character() string {
 func special() string {
 	characters := "~!@#$%^&*()-_=+{}[]:;/?<>,.|"
 	rand.Seed(time.Now().UTC().UnixNano())
-	index := rand.Intn(29)
+	index := rand.Intn(28)
 
 	return characters[index:index+1]
 }
@@ -72,7 +74,7 @@ func main() {
 		case "d":
 			output += digit()
 		case "c":
-			output += character()				
+			output += character()
 		case "l":
 			output += lower()
 		case "u":
