@@ -15,9 +15,9 @@ package main
 import ( 
 	"fmt"
 	"os"
-	"rand"
-	"strconv"
+	"math/rand"
 	"time"
+	"strconv"
 	"github.com/pborman/getopt"
 	// There will likely be several mode APIs you need
 )
@@ -58,7 +58,50 @@ var patternval string = `pattern (set of symbols defining password)
 func generatePasword(length int8, pattern string, webflag bool) string {
 
 	pwd := "" // Start with nothing and add code
-
+	if pattern != "" {
+		var s string 
+		for m := 0; m <= len(pattern)-1; m++ {
+			s = string(pattern[m])
+			l, err := strconv.ParseInt(s , 10, 64)
+			if err != nil{
+				l = 1
+			} else {
+				s = string(pattern[m - 1])
+				l -= 1
+			}
+			for l > 0 {
+				if s == "d"{			//for digit
+					pwd += digit()
+				} else if s == "c" {		//for either lower or upper case letter
+					n := rand.Intn(2)	
+					if n == 0{
+						pwd += lower()
+					} else {
+						pwd += upper()
+					}
+				} else if s == "l" {		//for lower case letter
+					pwd += lower()
+				} else if s == "u" {		//for upper case letter
+					pwd += upper()
+				} else {
+					//for word
+				}
+				l--
+			}
+		}
+		return pwd
+	}	
+	var j int8
+	for j = 1; j<=length; j++{
+		i := rand.Intn(3) + 1
+		if i == 1 {		//if 1 digit
+			pwd += digit()
+		} else if i == 2{	//if 2 lower case letter
+			pwd += lower()
+		} else {		//if 3 special character
+			pwd += special()
+		}
+	}
 	// Now return the password
 	return pwd
 }
@@ -108,6 +151,11 @@ func main() {
 		if plength <= 0 || plength > 64 {
 			plength = 16
 		}
+		l, err := strconv.ParseInt(*length , 10, 8)
+		if err != nil{
+			os.Exit(-1)
+		}
+		plength = int8(l)
 	}
 
 
@@ -118,3 +166,51 @@ func main() {
 	// Return (no return code)
 	return
 }
+
+// random digit generator
+func digit() string {
+	digits := "0123456789"
+	rand.Seed(time.Now().UTC().UnixNano())
+	index := rand.Intn(10)
+
+	return digits[index:index+1]
+}
+
+// random lower case letter generator
+func lower() string {
+	letters := "qazwsxedcrfvtgbyhnujmikolp"
+	rand.Seed(time.Now().UTC().UnixNano())
+	index := rand.Intn(26)
+
+	return letters[index:index+1]
+}
+
+// random upper case letter generator
+func upper() string {
+	letters := "QAZWSXEDCRFVTGBYHNUJMIKOLP"
+	rand.Seed(time.Now().UTC().UnixNano())
+	index := rand.Intn(26)
+
+	return letters[index:index+1]
+}
+
+// random English letter generagor
+func character() string {
+	rand.Seed(time.Now().UTC().UnixNano())
+	if rand.Intn(2) % 2 == 1 {
+		return lower()
+	} else {
+		return upper()
+	}
+}
+
+// special characters: ~!@#$%^&*()-_=+{}[]:;/?<>,.|\
+
+func special() string {
+	characters := "~!@#$%^&*()-_=+{}[]:;/?<>,.|"
+	rand.Seed(time.Now().UTC().UnixNano())
+	index := rand.Intn(28)
+
+	return characters[index:index+1]
+}
+
