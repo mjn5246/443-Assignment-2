@@ -23,6 +23,7 @@ I accept the master password if it is not longer than 32 bytes.
 do not match, I change "return &wallet" to "return nil". 
 
 12/3/2017 1 pm
+
 Added hmac to "create" and "create" now writes output to a file. The hmac uses 
 Sha1 as the hash function, and master password as the key. The result of hmac
 is encoded using base64. 
