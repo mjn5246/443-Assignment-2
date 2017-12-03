@@ -15,6 +15,7 @@ package main
 import ( 
 	"fmt"
 	"os"
+	"bufio"
 	"time"
 	"strings"
 	"math/rand"
@@ -143,13 +144,12 @@ func createWallet(filename string) *wallet {
 		key := input
 
 		// write the top line to the file
-		topline := time.Now().String() + "\t" + "|| generation: 1 || \n"
+		topline := time.Now().String() + "\t" + "|| generation: 1 ||\n"
 		f.WriteString(topline)
 
 		// create hmac of the topline using master password as the key
-		message := []byte(topline)
 		hash := hmac.New(sha1.New, key)
-		hash.Write(message)
+		hash.Write([]byte(topline))
 
 		// encode the result of hmac into base64
 		encode := base64.StdEncoding.EncodeToString(hash.Sum(nil))
@@ -174,6 +174,39 @@ func loadWallet(filename string) *wallet {
 	// Setup the wallet
 	var wal443 wallet 
 	// DO THE LOADING HERE
+	// Open the file
+	var newPath = path + filename
+	f,_ := os.Open(newPath)
+	defer f.Close()
+
+	// ask for master password
+	var key []byte
+	fmt.Print("Please enter the Master Password: ")
+	fmt.Scanln(&key)
+
+	// The following code checks if the entered password is correct
+	var content []string		// store all the content of the file
+
+	scanner := bufio.NewScanner(f)	// read the file line by line
+	for scanner.Scan() {
+		str := scanner.Text()
+		content = append(content, str)
+	}
+
+	// convert each line (except for the last line) to byte and write to hash
+	hash := hmac.New(sha1.New, key)
+	for i := 0; i < len(content) - 1; i++ {
+		line := []byte(content[i] + "\n")	// For some readon + "\n" is needed
+		hash.Write(line)
+	}
+
+	HMAC_value := content[ len(content)-1 ]		// The last line is the HMAC value
+
+	// check hmac with the given password
+	encode := base64.StdEncoding.EncodeToString(hash.Sum(nil))
+	if (encode == HMAC_value) {
+		fmt.Println("Right password")
+	}
 
 	// Return the wall
 	return &wal443
@@ -195,6 +228,15 @@ func (wal443 wallet) saveWallet() bool {
 	return true
 }
 
+
+func (wal443 wallet) addPassword(password string) bool {
+
+	var newPath = path + wal443.filename
+	f, _ := os.Open(newPath)
+	defer f.Close()
+
+	return true
+}
 ////////////////////////////////////////////////////////////////////////////////
 //
 // Function     : processWalletCommand
