@@ -20,6 +20,9 @@ match right after the user enters the password for a second time.
 I accept the master password if it is not longer than 32 bytes. 
 
 3. When the user enters an invalid master password or if the two passwords 
-do not match, I change "return &wallet" to "os.Exit(0)". Because previously,
-I found that even if the user enters an invalid password, a new file will
-still be created (it is wierd, ummmm). 
+do not match, I change "return &wallet" to "return nil". 
+
+12/3/2017 1 pm
+Added hmac to "create" and "create" now writes output to a file. The hmac uses 
+Sha1 as the hash function, and master password as the key. The result of hmac
+is encoded using base64. 
