@@ -97,11 +97,15 @@ func createWallet(filename string) *wallet {
 	var newPath = path + filename
 	var input, input2 []byte
 
-	fmt.Print("Enter Master Password (no longer than 32bytes): ")	//asking for the master password from the user		
+	fmt.Print("Enter Master Password (no longer than 32 bytes): ")	//asking for the master password from the user		
 
 	fmt.Scanln(&input)
 	if cap(input) > 32{
-		fmt.Print("MasterPassword must be no longer than 32 length\n")
+		fmt.Print("Master Password must be no longer than 32 length\n")
+		os.Exit(0)
+	}
+	if cap(input) < 8 {
+		fmt.Pringln("Please enter a longer Master Password\n")
 		os.Exit(0)
 	}
 
@@ -110,7 +114,7 @@ func createWallet(filename string) *wallet {
 
 	// check if master passwords match
 	if string(input) != string(input2) {
-		fmt.Print("Master passwords do not match\n")
+		fmt.Print("Master Passwords do not match\n")
 		os.Exit(0)
 	}
 
