@@ -88,7 +88,7 @@ func walletUsage() {
 // Outputs      : the wallet if created, nil otherwise
 
 func createWallet(filename string) *wallet {
-
+	
 	// Setup the wallet
 	var wal443 wallet 
 	wal443.filename = filename
@@ -104,10 +104,10 @@ func createWallet(filename string) *wallet {
 		fmt.Print("Master Password must be no longer than 32 length\n")
 		os.Exit(0)
 	}
-	if cap(input) < 8 {
-		fmt.Pringln("Please enter a longer Master Password\n")
-		os.Exit(0)
-	}
+//	if cap(input) < 8 {
+//		fmt.Pringln("Please enter a longer Master Password\n")
+//		os.Exit(0)
+//	}
 
 	fmt.Print("Re-enter Master Password: ")
 	fmt.Scanln(&input2)
