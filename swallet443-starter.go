@@ -58,6 +58,10 @@ where:
 
 var verbose bool = true
 
+//*************MY GLOBALS*************************//
+var path = "/home/mauro/Documents/"
+//You may have to change for your own directory
+
 // You may want to create more global variables
 
 //
@@ -91,7 +95,36 @@ func createWallet(filename string) *wallet {
 	var wal443 wallet 
 	wal443.filename = filename
 	wal443.masterPassword = make([]byte, 32, 32) // You need to take it from here
+	var newPath = path + filename
+	var input, input2 []byte
 
+	fmt.Print("Enter Master Password (32bytes): ")	//asking for the master password from the user		
+	fmt.Scanln(&input)
+
+	if cap(input) != 32{
+		fmt.Print("MasterPassword must be of 32 length\n")
+		return &wal443
+	}
+
+	fmt.Print("Re-enter Master Password: ")
+	fmt.Scanln(&input2)
+
+	var _, err = os.Stat(newPath)
+	if os.IsNotExist(err) {				//checks if the file already exists
+		var _,err = os.Create(newPath)		//creates file
+		if err != nil { 
+			os.Exit(0)
+		}
+		if string(input[32]) != string(input2[32]) {
+			fmt.Print("These do not match\n")
+			return &wal443
+		} else {
+			wal443.masterPassword = input
+		}
+		
+	} else {
+		fmt.Println("This already exists\n" );
+	}
 	// Return the wall
 	return &wal443
 }
@@ -145,7 +178,7 @@ func (wal443 wallet) processWalletCommand(command string) bool {
 	switch command {
 	case "add":
 		// DO SOMETHING HERE, e.g., wal443.addPassword(...)
-
+		
 	case "del":
 		// DO SOMETHING HERE
 		
