@@ -27,3 +27,7 @@ do not match, I change "return &wallet" to "return nil".
 Added hmac to "create" and "create" now writes output to a file. The hmac uses 
 Sha1 as the hash function, and master password as the key. The result of hmac
 is encoded using base64. 
+
+12/3/2017 3 pm
+
+I hope "loadwallet" is completed and it does what we want to it to do. 
