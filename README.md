@@ -11,7 +11,7 @@ Got create to work. Check for any bugs
 Also for my path variable you will have to change it to where you have
 the file.
 
-12/2/2017 23:41
+12/3/2017 10 am
 1. I moved some code around. For example, I check if the file exists right
 after the user enters the file name. And I check if the two master passwords
 match right after the user enters the password for a second time. 
