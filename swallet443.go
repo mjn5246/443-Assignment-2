@@ -19,6 +19,9 @@ import (
 	"strings"
 	"math/rand"
 	"github.com/pborman/getopt"
+	"crypto/hmac"
+	"crypto/sha1"
+	"encoding/base64"
 	// There will likely be several mode APIs you need
 )
 
@@ -100,7 +103,7 @@ func createWallet(filename string) *wallet {
 	var _, err = os.Stat(newPath)
 	if !os.IsNotExist(err) {				// checks if the file already exists
 		fmt.Println("This file already exists" )
-		os.Exit(0)
+		return nil
 	}
 
 	fmt.Print("Enter Master Password (no longer than 32bytes): ")	// asking for the master password from the user		
@@ -121,14 +124,37 @@ func createWallet(filename string) *wallet {
 	// check if master passwords match
 	if string(input) != string(input2) {
 		fmt.Print("Master passwords do not match\n")
-		os.Exit(0)
+		return nil
 	}
 
-	_, err = os.Create(newPath)		//creates file
-	if err != nil { 
+	// create the file
+	f, err := os.Create(newPath)
+	if err != nil {
+		fmt.Println("Can't create wallet")
+		os.Exit(0)
+	}
+	// close the file at the end
+	defer f.Close()
+
+	if err != nil {
 		os.Exit(0)
 	} else {
 		wal443.masterPassword = input
+		key := input
+
+		// write the top line to the file
+		topline := time.Now().String() + "\t" + "|| generation: 1 || \n"
+		f.WriteString(topline)
+
+		// create hmac of the topline using master password as the key
+		message := []byte(topline)
+		hash := hmac.New(sha1.New, key)
+		hash.Write(message)
+
+		// encode the result of hmac into base64
+		encode := base64.StdEncoding.EncodeToString(hash.Sum(nil))
+		f.WriteString(encode)
+
 		fmt.Println("Wallet created")
 	}
 
@@ -164,10 +190,6 @@ func loadWallet(filename string) *wallet {
 func (wal443 wallet) saveWallet() bool {
 
 	// Setup the wallet
-	f, _ := os.Create(wal443.filename)
-	defer f.Close()
-
-	f.Write(wal443.masterPassword)
 
 	// Return successfully
 	return true
