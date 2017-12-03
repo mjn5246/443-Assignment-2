@@ -88,7 +88,7 @@ func walletUsage() {
 // Outputs      : the wallet if created, nil otherwise
 
 func createWallet(filename string) *wallet {
-	
+
 	// Setup the wallet
 	var wal443 wallet 
 	wal443.filename = filename
@@ -97,14 +97,20 @@ func createWallet(filename string) *wallet {
 	var newPath = path + filename
 	var input, input2 []byte
 
-	fmt.Print("Enter Master Password (no longer than 32 bytes): ")	//asking for the master password from the user		
+	var _, err = os.Stat(newPath)
+	if !os.IsNotExist(err) {				// checks if the file already exists
+		fmt.Println("This file already exists" )
+		os.Exit(0)
+	}
+
+	fmt.Print("Enter Master Password (no longer than 32bytes): ")	// asking for the master password from the user		
 
 	fmt.Scanln(&input)
-	if cap(input) > 32{
+	if cap(input) > 32 {	// check if the password is too long
 		fmt.Print("Master Password must be no longer than 32 length\n")
 		os.Exit(0)
 	}
-//	if cap(input) < 8 {
+//	if cap(input) < 8 {	// check if the password is too short
 //		fmt.Pringln("Please enter a longer Master Password\n")
 //		os.Exit(0)
 //	}
@@ -114,21 +120,18 @@ func createWallet(filename string) *wallet {
 
 	// check if master passwords match
 	if string(input) != string(input2) {
-		fmt.Print("Master Passwords do not match\n")
+		fmt.Print("Master passwords do not match\n")
 		os.Exit(0)
 	}
 
-	var _, err = os.Stat(newPath)
-	if os.IsNotExist(err) {				//checks if the file already exists
-		var _,err = os.Create(newPath)		//creates file
-		if err != nil { 
-			os.Exit(0)
-		} else {
-			wal443.masterPassword = input
-		}
+	_, err = os.Create(newPath)		//creates file
+	if err != nil { 
+		os.Exit(0)
 	} else {
-		fmt.Println("This file already exists\n" );
+		wal443.masterPassword = input
+		fmt.Println("Wallet created")
 	}
+
 	return &wal443
 }
 
