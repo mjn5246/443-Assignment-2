@@ -31,3 +31,13 @@ is encoded using base64.
 12/3/2017 3 pm
 
 I hope "loadwallet" is completed and it does what we want to it to do. 
+
+12/4/2017
+Addpassword now works. I have also reorganized code for "create", "load", and "save". 
+
+"Create" only checks if the file already exists, whilewriting output is 
+actually performed in "save". Because I found that we call "save()" every time 
+we changed something in the wallet (either create wallet, or add a password),
+so it would be nice to have a single function just does the writing stuff. 
+
+Similarly, "load" only loads content in a file to wal443 (type wallet). 
