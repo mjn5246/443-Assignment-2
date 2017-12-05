@@ -28,6 +28,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha1"
 	"crypto/aes"
+	"crypto/cipher"
 	"encoding/base64"
 	"unicode"
 	// There will likely be several mode APIs you need
@@ -145,7 +146,7 @@ func keyGenerator( masterPassword []byte ) []byte {
 
 // This function pads a password to 32 bytes long
 func padding(password []byte) []byte {
-	pad := 32 - len(password)
+	pad := 16 - len(password)
 	password_long := append(password, make([]byte, pad, pad)...)
 
 	return password_long
@@ -153,14 +154,32 @@ func padding(password []byte) []byte {
 
 // This function encrypts the password and encodes the output using base64
 func AES_encrypt(key []byte, salt []byte, password []byte) []byte {
-	blockCipher, _ := aes.NewCipher(key)
+	
+	plaintext := append(salt, padding(password)...)
+	block, _ := aes.NewCipher(key)
+	aesgcm, _ := cipher.NewGCM(block)
 
-	var cipherText = make([]byte, 16)
-	var plainText = append(salt, password...)
+	nonce := make([]byte, 12)
+	ciphertext := aesgcm.Seal(nil, nonce, plaintext, nil)
 
-  blockCipher.Encrypt(cipherText, plainText)
-	encode := base64.StdEncoding.EncodeToString(cipherText)
+	// encode using base 64
+	encode := base64.StdEncoding.EncodeToString(ciphertext)
 	return []byte(encode)
+}
+
+func AES_decrypt(key []byte, encode []byte) []byte {
+
+	// decode the encoded ciphertext
+	ciphertext, _ := base64.StdEncoding.DecodeString(string(encode))
+
+	nonce := make([]byte, 12)
+
+	block, _ := aes.NewCipher(key)
+	aesgcm, _ := cipher.NewGCM(block)
+	plaintext, _ := aesgcm.Open(nil, nonce, ciphertext, nil)
+
+	// igore the salt
+	return plaintext[16:]
 }
 
 // Up to you to decide which functions you want to add
@@ -261,7 +280,7 @@ func loadWallet(filename string) *wallet {
 	fmt.Print("Please enter the Master Password: ")
 	fmt.Scanln(&key)
 
-//	##### The following code checks if the entered password is correct #####
+	// ##### The following code checks if the entered password is correct #####
 	// read everything in the file
         input, err := ioutil.ReadFile(newPath)
         if err != nil {
@@ -305,7 +324,7 @@ func loadWallet(filename string) *wallet {
 		// append the entry to the field passwords
 		wal443.passwords = append(wal443.passwords, entry)
 	}
-	fmt.Println("Wallet loaded successfully")
+	fmt.Println("Wallet loaded successfully\n")
 
 	// Return the wall
 	return &wal443
@@ -381,17 +400,128 @@ func (wal443 *wallet) addPassword() bool {
 
 	salt := saltGenerator()				// salt is []byte; base64
 	key := keyGenerator(wal443.masterPassword)	// key is []byte
-	input = padding(input)				// input is []byte
 
 	// Generate the encryption of password using aes, the output is base64
 	password := AES_encrypt(key, salt, input)	// password is []byte, base64
 
-	// Add the new password to wal443, note that the wal443 is modified
+	// Add the new password to wal443, note that the wal443 is modified after this function returns
 	var entry = walletEntry{password, salt, comment}
 	wal443.passwords = append(wal443.passwords, entry)
+	
+	fmt.Println("Password added successfully")
 
 	return true
 }
+
+func (wal443 *wallet) delPassword() bool {
+	return true
+}
+
+func (wal443 *wallet) showPassword() bool {
+	var entry_number int
+
+	if len(wal443.passwords) == 0 {
+		fmt.Println("No password is in the wallet")
+		return false
+	}
+
+	fmt.Print("Please enter an entry number: (from 1 to ", len(wal443.passwords), " ): ")
+	fmt.Scanln(&entry_number)
+
+//	for i:=0; i<len(wal443.passwords); i++ {
+//		fmt.Printf("%s\n", wal443.passwords[i].password)
+//	}
+
+	ciphertext := wal443.passwords[entry_number-1].password
+	key := keyGenerator(wal443.masterPassword)
+
+	// decrypt the encrypted password
+	plaintext := AES_decrypt(key, ciphertext)
+
+	// display password and comment
+	line := "Password: " + string(plaintext) + " || comment: "
+	line += string(wal443.passwords[entry_number-1].comment)
+	fmt.Println(line)
+
+	return true
+}
+
+func (wal443 *wallet) changePassword() bool {
+
+
+	return true
+}
+
+// This function resets the master password
+func (wal443 *wallet) reset() bool {
+
+	var input, input2 []byte
+
+	// Prompt for a new master password
+	fmt.Print("Please enter a new Master Password (no longer than 32bytes): ")
+	fmt.Scanln(&input)
+
+	for cap(input) > 32 {	// check if the password is too long
+		fmt.Print("Master Password must be no longer than 32 length\n")
+		fmt.Print("Try a different Master Password: ")
+		fmt.Scanln(&input)
+	}
+
+	fmt.Print("Confirm Master Password: ")
+	fmt.Scanln(&input2)
+
+	// check if master passwords match
+	if string(input) != string(input2) {
+		fmt.Print("Master passwords do not match\n")
+		return false
+	}
+	
+	// generate old_key and new_key
+	old_key := keyGenerator(wal443.masterPassword)
+	new_key := keyGenerator(input)
+
+	// reset master password
+	wal443.masterPassword = input
+
+	// we need to re-encrypt all passwords using the new master password
+	for i := 0; i < len(wal443.passwords); i++ {
+		old_ciphertext := wal443.passwords[i].password
+		salt := wal443.passwords[i].salt
+
+		// plaintext of the password
+		plaintext := AES_decrypt(old_key, old_ciphertext)
+
+		// re-encrypt the password
+		new_ciphertext := AES_encrypt(new_key, salt, plaintext)
+		wal443.passwords[i].password = new_ciphertext
+	}
+
+	fmt.Println("Master Password is reset successfully")
+	// return succeccfully
+	return true
+}
+
+// This function lists all entries in the wallet
+func (wal443 *wallet) list() bool {
+
+	// if no password is in the wallet
+	if len(wal443.passwords) == 0 {
+		fmt.Println("No password is in the wallet")
+		return false
+	}
+	
+	// Write the entries
+	fmt.Println("entry || comment")
+	for i := 0; i < len(wal443.passwords); i++ {
+		entry := strconv.Itoa(i+1)
+		line := entry + " || " + string(wal443.passwords[i].comment)
+		fmt.Println(line)
+	}
+
+	return true
+}
+
+
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -414,16 +544,22 @@ func (wal443 *wallet) processWalletCommand(command string) bool {
 		// DO SOMETHING HERE
 
 	case "show":
-		// DO SOMETHING HERE
+		wal443.showPassword()
+
+		// The return is set to false because there is no need to call savewallet()
+		return false
 
 	case "chpw":
 		// DO SOMETHING HERE
 
 	case "reset":
-		// DO SOMETHING HERE
+		wal443.reset()
 
 	case "list":
-		// DO SOMETHING HERE
+		wal443.list()
+
+		// The return is set to false because there is no need to call savewallet()
+		return false
 
 	default:
 		// Handle error, return failure
