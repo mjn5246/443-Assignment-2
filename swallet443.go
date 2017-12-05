@@ -414,6 +414,16 @@ func (wal443 *wallet) addPassword() bool {
 }
 
 func (wal443 *wallet) delPassword() bool {
+	var entry_number int
+	fmt.Print("Please enter an entry number: (from 1 to ", len(wal443.passwords), " ): ")
+	fmt.Scanln(&entry_number)
+	
+	if(entry_number >= len(wal443.passwords) && entry_number > 0){
+		fmt.Print("The entry does not exist please try again: ");
+		fmt.Scanln(&entry_number)
+	}
+	
+	wal443.passwords = append(wal443.passwords[:entry_number],wal443.passwords[entry_number+1:]...);
 	return true
 }
 
@@ -447,7 +457,51 @@ func (wal443 *wallet) showPassword() bool {
 }
 
 func (wal443 *wallet) changePassword() bool {
+	var entry_number int
+	fmt.Print("Please enter an entry number: (from 1 to ", len(wal443.passwords), " ): ")
+	fmt.Scanln(&entry_number)
+	
+	if(entry_number > len(wal443.passwords) && entry_number > 0){
+		fmt.Print("The entry does not exist please try again: ");
+		fmt.Scanln(&entry_number)
+	}
 
+	var input, input2, comment []byte
+	// ask for the password to be added
+	fmt.Print("Please enter a password (no longer than 16 bytes): ")
+
+	fmt.Scanln(&input)
+	for cap(input) > 16 {	// check if the password is too long
+		fmt.Print("Password is too long, try a different password: ")
+		fmt.Scanln(&input)
+	}
+
+	fmt.Print("Confirm the password: ")
+	fmt.Scanln(&input2)
+
+	// check if the passwords match
+	if string(input) != string(input2) {
+		fmt.Print("Two passwords do not match\n")
+		return false
+	}
+
+	fmt.Print("Enter any comment for the password (maxsize is 128 bytes): ")
+	fmt.Scanln(&comment)
+	for len(comment) > 128 {
+		fmt.Print("Comment is too long, re-enter the comment: ")
+		fmt.Scanln(&comment)
+	}
+
+	salt := wal443.passwords[entry_number-1].salt			// salt is []byte; base64
+	key := keyGenerator(wal443.masterPassword)	// key is []byte
+
+	// Generate the encryption of password using aes, the output is base64
+	password := AES_encrypt(key, salt, input)	// password is []byte, base64
+
+	// Add the new password to wal443, note that the wal443 is modified after this function returns
+	var entry = walletEntry{password, salt, comment}
+
+	wal443.passwords[entry_number-1] = entry
 
 	return true
 }
@@ -542,7 +596,7 @@ func (wal443 *wallet) processWalletCommand(command string) bool {
 
 	case "del":
 		// DO SOMETHING HERE
-
+		wal443.delPassword()
 	case "show":
 		wal443.showPassword()
 
@@ -551,7 +605,7 @@ func (wal443 *wallet) processWalletCommand(command string) bool {
 
 	case "chpw":
 		// DO SOMETHING HERE
-
+		wal443.changePassword()
 	case "reset":
 		wal443.reset()
 
