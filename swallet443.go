@@ -4,8 +4,8 @@
 //  Description    : This is the implementaiton file for the swallet password
 //                   wallet program program.  See assignment details.
 //
-//  Collaborators  : **TODO**: FILL ME IN
-//  Last Modified  : **TODO**: FILL ME IN
+//  Collaborators  : **TODO**: Patrick Colville, Mauro Notaro, Weiyu Luo
+//  Last Modified  : **TODO**: 2017/12/5 20:21
 //
 
 // Package statement
@@ -418,12 +418,15 @@ func (wal443 *wallet) delPassword() bool {
 	fmt.Print("Please enter an entry number: (from 1 to ", len(wal443.passwords), " ): ")
 	fmt.Scanln(&entry_number)
 	
-	if(entry_number >= len(wal443.passwords) && entry_number > 0){
-		fmt.Print("The entry does not exist please try again: ");
-		fmt.Scanln(&entry_number)
+	// check if the entry number is valid
+	if (entry_number >= len(wal443.passwords) || entry_number <= 0){
+		fmt.Print("The entry does not exist\n")
+		return false
 	}
 	
-	wal443.passwords = append(wal443.passwords[:entry_number],wal443.passwords[entry_number+1:]...);
+	wal443.passwords = append(wal443.passwords[:entry_number-1], wal443.passwords[entry_number:]...)
+	fmt.Println("Password deleted succefully")
+
 	return true
 }
 
@@ -438,9 +441,10 @@ func (wal443 *wallet) showPassword() bool {
 	fmt.Print("Please enter an entry number: (from 1 to ", len(wal443.passwords), " ): ")
 	fmt.Scanln(&entry_number)
 
-//	for i:=0; i<len(wal443.passwords); i++ {
-//		fmt.Printf("%s\n", wal443.passwords[i].password)
-//	}
+	if (entry_number > len(wal443.passwords) || entry_number <= 0){
+		fmt.Print("The entry does not exist\n")
+		return false
+	}
 
 	ciphertext := wal443.passwords[entry_number-1].password
 	key := keyGenerator(wal443.masterPassword)
@@ -461,9 +465,10 @@ func (wal443 *wallet) changePassword() bool {
 	fmt.Print("Please enter an entry number: (from 1 to ", len(wal443.passwords), " ): ")
 	fmt.Scanln(&entry_number)
 	
-	if(entry_number > len(wal443.passwords) && entry_number > 0){
-		fmt.Print("The entry does not exist please try again: ");
-		fmt.Scanln(&entry_number)
+	// check if the entry number is valid
+	if (entry_number > len(wal443.passwords) || entry_number <= 0){
+		fmt.Print("The entry does not exist\n")
+		return false
 	}
 
 	var input, input2, comment []byte
@@ -502,6 +507,7 @@ func (wal443 *wallet) changePassword() bool {
 	var entry = walletEntry{password, salt, comment}
 
 	wal443.passwords[entry_number-1] = entry
+	fmt.Println("Password changed successfully")
 
 	return true
 }
@@ -592,11 +598,10 @@ func (wal443 *wallet) processWalletCommand(command string) bool {
 	switch command {
 	case "add":
 		wal443.addPassword()
-		// DO SOMETHING HERE, e.g., wal443.addPassword(...)
 
 	case "del":
-		// DO SOMETHING HERE
 		wal443.delPassword()
+
 	case "show":
 		wal443.showPassword()
 
@@ -604,8 +609,8 @@ func (wal443 *wallet) processWalletCommand(command string) bool {
 		return false
 
 	case "chpw":
-		// DO SOMETHING HERE
 		wal443.changePassword()
+
 	case "reset":
 		wal443.reset()
 
